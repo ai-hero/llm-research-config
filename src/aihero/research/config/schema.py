@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from peft import LoraConfig
 
 
-class Project(BaseModel):
+class ProjectConfig(BaseModel):
     """Represents a project with a name."""
 
     name: str
@@ -29,7 +29,7 @@ class Type(str, Enum):
     LOCAL = "local"
 
 
-class Dataset(BaseModel):
+class DatasetConfig(BaseModel):
     """Describes a dataset including its name, type, and associated task."""
 
     name: str
@@ -44,52 +44,52 @@ class ModelConfig(BaseModel):
     type: Type
 
 
-class Model(BaseModel):
+class TrainingModelsConfig(BaseModel):
     """Combines base and optional output model configurations."""
 
     base: ModelConfig
     output: Optional[ModelConfig] = None
 
 
-class Trainer(BaseModel):
+class TrainerExtras(BaseModel):
     """Configuration for model training, including packing and sequence length settings."""
 
     packing: bool
     max_seq_length: int
 
 
-class Generator(BaseModel):
+class GeneratorExtras(BaseModel):
     """Configuration for generation tasks, similar to Trainer."""
 
     packing: bool
     max_seq_length: int
 
 
-class Tokenizer(BaseModel):
+class TokenizerExtras(BaseModel):
     """Optional configuration for tokenizers, including additional tokens."""
 
     additional_tokens: Optional[List[str]] = None
 
 
-class Freeze(BaseModel):
+class FreezeExtras(BaseModel):
     """Miscellaneous optional configurations for training, like embedding freezing."""
 
     freeze_embed: Optional[bool] = None
     n_freeze: Optional[int] = None
 
 
-class Training(BaseModel):
+class TrainingConfig(BaseModel):
     """Comprehensive configuration for training, including task, dataset, model, and others."""
 
     task: Task
-    dataset: Dataset
-    model: Model
-    trainer: Trainer
+    dataset: DatasetConfig
+    model: ModelConfig
+    trainer: TrainerExtras
     sft: TrainingArguments
     peft: Optional[LoraConfig] = None
     quantized: Optional[bool] = None
-    tokenizer: Optional[Tokenizer] = None
-    freeze: Optional[Freeze] = None
+    tokenizer: Optional[TokenizerExtras] = None
+    freeze: Optional[FreezeExtras] = None
 
     @validator("quantized")
     def check_quantized_with_peft(cls, v, values, **kwargs):
@@ -99,36 +99,53 @@ class Training(BaseModel):
         return v
 
 
-class BatchInference(BaseModel):
+class BatchInferenceConfig(BaseModel):
     """Configuration for batch inference, including task, dataset, and model details."""
 
     task: Task
-    dataset: Dataset
-    model: Model
-    generator: Generator
+    dataset: DatasetConfig
+    model: ModelConfig
+    generator: GeneratorExtras
 
 
-class Config(BaseModel):
+class TrainerConfig(BaseModel):
     """Root configuration combining project, training, and batch inference settings with exclusivity validation."""
 
-    project: Project
-    training: Optional[Training] = None
-    batch_inference: Optional[BatchInference] = None
-
-    @validator("training", "batch_inference", pre=True, each_item=True)
-    def check_exclusivity(cls, v, values, **kwargs):
-        """Ensure exclusivity between training and batch inference configurations."""
-        if "training" in values and "batch_inference" in values:
-            raise ValueError("Config can include either training or batch_inference, not both.")
-        return v
+    project: ProjectConfig
+    training: TrainingConfig
 
     @staticmethod
-    def load(file_path: str) -> "Config":
+    def load(file_path: str) -> "TrainingConfig":
         """Load and validate a configuration file."""
         try:
             with open(file_path, "r") as file:
                 data = yaml.safe_load(file)
-                config = Config(**data)
+                config = TrainingConfig(**data)
+                return config
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            raise SystemExit(1)
+        except ValidationError as e:
+            print(f"Validation error: {e}")
+            raise SystemExit(1)
+        except yaml.YAMLError as e:
+            print(f"YAML parsing error: {e}")
+            raise SystemExit(1)
+
+
+class BatchInfererConfig(BaseModel):
+    """Root configuration combining project, training, and batch inference settings with exclusivity validation."""
+
+    project: ProjectConfig
+    batch_inference: BatchInferenceConfig
+
+    @staticmethod
+    def load(file_path: str) -> "BatchInfererConfig":
+        """Load and validate a configuration file."""
+        try:
+            with open(file_path, "r") as file:
+                data = yaml.safe_load(file)
+                config = BatchInfererConfig(**data)
                 return config
         except FileNotFoundError:
             print(f"File not found: {file_path}")
