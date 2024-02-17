@@ -44,13 +44,6 @@ class ModelConfig(BaseModel):
     type: Type
 
 
-class TrainingModelsConfig(BaseModel):
-    """Combines base and optional output model configurations."""
-
-    base: ModelConfig
-    output: Optional[ModelConfig] = None
-
-
 class TrainerExtras(BaseModel):
     """Configuration for model training, including packing and sequence length settings."""
 
@@ -78,18 +71,27 @@ class FreezeExtras(BaseModel):
     n_freeze: Optional[int] = None
 
 
-class TrainingConfig(BaseModel):
+class EvalExtras(BaseModel):
+    size: int = 100
+    tests: Optional[str] = None
+    metrics: Optional[str] = None
+
+
+class TrainingJob(BaseModel):
     """Comprehensive configuration for training, including task, dataset, model, and others."""
 
+    project: ProjectConfig
     task: Task
     dataset: DatasetConfig
-    model: ModelConfig
+    base: ModelConfig
+    output: Optional[ModelConfig] = None
     trainer: TrainerExtras
     sft: TrainingArguments
     peft: Optional[LoraConfig] = None
     quantized: Optional[bool] = None
     tokenizer: Optional[TokenizerExtras] = None
     freeze: Optional[FreezeExtras] = None
+    eval: Optional[EvalExtras] = None
 
     @validator("quantized")
     def check_quantized_with_peft(cls, v, values, **kwargs):
@@ -98,29 +100,13 @@ class TrainingConfig(BaseModel):
             raise ValueError("'quantized' can be True only if 'peft' is provided.")
         return v
 
-
-class BatchInferenceConfig(BaseModel):
-    """Configuration for batch inference, including task, dataset, and model details."""
-
-    task: Task
-    dataset: DatasetConfig
-    model: ModelConfig
-    generator: GeneratorExtras
-
-
-class TrainerConfig(BaseModel):
-    """Root configuration combining project, training, and batch inference settings with exclusivity validation."""
-
-    project: ProjectConfig
-    training: TrainingConfig
-
     @staticmethod
-    def load(file_path: str) -> "TrainingConfig":
+    def load(file_path: str) -> "TrainingJob":
         """Load and validate a configuration file."""
         try:
             with open(file_path, "r") as file:
                 data = yaml.safe_load(file)
-                config = TrainingConfig(**data)
+                config = TrainingJob(**data)
                 return config
         except FileNotFoundError:
             print(f"File not found: {file_path}")
@@ -133,19 +119,23 @@ class TrainerConfig(BaseModel):
             raise SystemExit(1)
 
 
-class BatchInfererConfig(BaseModel):
-    """Root configuration combining project, training, and batch inference settings with exclusivity validation."""
+class BatchInferenceJob(BaseModel):
+    """Configuration for batch inference, including task, dataset, and model details."""
 
     project: ProjectConfig
-    batch_inference: BatchInferenceConfig
+    task: Task
+    dataset: DatasetConfig
+    model: ModelConfig
+    generator: GeneratorExtras
+    eval: Optional[EvalExtras] = None
 
     @staticmethod
-    def load(file_path: str) -> "BatchInfererConfig":
+    def load(file_path: str) -> "BatchInferenceJob":
         """Load and validate a configuration file."""
         try:
             with open(file_path, "r") as file:
                 data = yaml.safe_load(file)
-                config = BatchInfererConfig(**data)
+                config = BatchInferenceJob(**data)
                 return config
         except FileNotFoundError:
             print(f"File not found: {file_path}")
