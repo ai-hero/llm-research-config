@@ -1,7 +1,9 @@
 """Schema for the configuration file, including project, dataset, model, and training settings."""
+import yaml
 from typing import Optional, List, Enum
 from pydantic import BaseModel, validator
 from transformers import TrainingArguments
+from pydantic import ValidationError
 from peft import LoraConfig
 
 
@@ -119,3 +121,21 @@ class Config(BaseModel):
         if "training" in values and "batch_inference" in values:
             raise ValueError("Config can include either training or batch_inference, not both.")
         return v
+
+    @staticmethod
+    def load(file_path: str) -> "Config":
+        """Load and validate a configuration file."""
+        try:
+            with open(file_path, "r") as file:
+                data = yaml.safe_load(file)
+                config = Config(**data)
+                return config
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            raise SystemExit(1)
+        except ValidationError as e:
+            print(f"Validation error: {e}")
+            raise SystemExit(1)
+        except yaml.YAMLError as e:
+            print(f"YAML parsing error: {e}")
+            raise SystemExit(1)
