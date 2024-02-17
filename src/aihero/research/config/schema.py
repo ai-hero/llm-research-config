@@ -37,7 +37,7 @@ class Dataset(BaseModel):
     task: Task
 
 
-class BaseModelConfig(BaseModel):
+class ModelConfig(BaseModel):
     """Configuration for a base model including its name and type."""
 
     name: str
@@ -47,8 +47,8 @@ class BaseModelConfig(BaseModel):
 class Model(BaseModel):
     """Combines base and optional output model configurations."""
 
-    base: BaseModelConfig
-    output: Optional[BaseModelConfig] = None
+    base: ModelConfig
+    output: Optional[ModelConfig] = None
 
 
 class Trainer(BaseModel):
