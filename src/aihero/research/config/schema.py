@@ -189,6 +189,7 @@ class BatchInferenceJob(BaseModel, use_enum_values=True):
     dataset: DatasetConfig
     model: ModelConfig
     quantized: Optional[bool] = None
+    tokenizer: Optional[TokenizerExtras] = None
     generator: GeneratorExtras
     eval: Optional[EvalExtras] = None
 
