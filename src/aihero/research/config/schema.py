@@ -1,9 +1,9 @@
 """Schema for the configuration file, including project, dataset, model, and training settings."""
-import yaml
-from typing import Optional, List
-from pydantic import BaseModel, validator
-from pydantic import ValidationError
 from enum import Enum
+from typing import Any, List, Optional
+
+import yaml  # type:ignore
+from pydantic import BaseModel, ValidationError, validator
 
 
 class ProjectConfig(BaseModel):
@@ -90,7 +90,7 @@ class SFT(BaseModel):
     max_steps: int
     gradient_accumulation_steps: int
     gradient_checkpointing: bool
-    gradient_checkpointing_kwargs: Optional[dict] = None
+    gradient_checkpointing_kwargs: Optional[dict[str, Any]] = None
     logging_strategy: str
     logging_steps: int
     evaluation_strategy: str
@@ -128,7 +128,7 @@ class TrainingJob(BaseModel, use_enum_values=True):
     eval: Optional[EvalExtras] = None
 
     @validator("quantized")
-    def check_quantized_with_peft(cls, v, values, **kwargs):
+    def check_quantized_with_peft(cls, v, values, **kwargs):  # type: ignore
         """Ensure 'quantized' is True only if 'peft' is provided."""
         if v and not values.get("peft"):
             raise ValueError("'quantized' can be True only if 'peft' is provided.")
@@ -138,7 +138,7 @@ class TrainingJob(BaseModel, use_enum_values=True):
     def load(file_path: str) -> "TrainingJob":
         """Load and validate a configuration file."""
         try:
-            with open(file_path, "r") as file:
+            with open(file_path) as file:
                 data = yaml.safe_load(file)
                 config = TrainingJob(**data)
                 return config
@@ -165,7 +165,7 @@ class ServingService(BaseModel, use_enum_values=True):
     def load(file_path: str) -> "ServingService":
         """Load and validate a configuration file."""
         try:
-            with open(file_path, "r") as file:
+            with open(file_path) as file:
                 data = yaml.safe_load(file)
                 config = ServingService(**data)
                 return config
@@ -197,7 +197,7 @@ class BatchInferenceJob(BaseModel, use_enum_values=True):
     def load(file_path: str) -> "BatchInferenceJob":
         """Load and validate a configuration file."""
         try:
-            with open(file_path, "r") as file:
+            with open(file_path) as file:
                 data = yaml.safe_load(file)
                 config = BatchInferenceJob(**data)
                 return config
