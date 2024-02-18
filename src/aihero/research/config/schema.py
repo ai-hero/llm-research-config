@@ -2,9 +2,7 @@
 import yaml
 from typing import Optional, List
 from pydantic import BaseModel, validator
-from transformers import TrainingArguments
 from pydantic import ValidationError
-from peft import LoraConfig
 from enum import Enum
 
 
@@ -30,7 +28,7 @@ class Type(str, Enum):
     LOCAL = "local"
 
 
-class DatasetConfig(BaseModel):
+class DatasetConfig(BaseModel, use_enum_values=True):
     """Describes a dataset including its name, type, and associated task."""
 
     name: str
@@ -38,7 +36,7 @@ class DatasetConfig(BaseModel):
     task: Task
 
 
-class ModelConfig(BaseModel):
+class ModelConfig(BaseModel, use_enum_values=True):
     """Configuration for a base model including its name and type."""
 
     name: str
@@ -81,7 +79,40 @@ class EvalExtras(BaseModel):
     metrics: Optional[str] = None
 
 
-class TrainingJob(BaseModel):
+class SFT(BaseModel):
+    """SFT Config."""
+
+    per_device_train_batch_size: int
+    per_device_eval_batch_size: int
+    learning_rate: float
+    lr_scheduler_type: str
+    warmup_ratio: float
+    max_steps: int
+    gradient_accumulation_steps: int
+    gradient_checkpointing: bool
+    gradient_checkpointing_kwargs: Optional[dict] = None
+    logging_strategy: str
+    logging_steps: int
+    evaluation_strategy: str
+    eval_steps: int
+    bf16: Optional[bool] = None
+    optim: Optional[str] = None
+    max_grad_norm: Optional[float] = None
+
+
+class PEFT(BaseModel):
+    """PEFT Config."""
+
+    r: int
+    lora_alpha: int
+    lora_dropout: float
+    bias: str
+    task_type: str
+    target_modules: List[str]
+    quantized: Optional[bool] = None
+
+
+class TrainingJob(BaseModel, use_enum_values=True):
     """Comprehensive configuration for training, including task, dataset, model, and others."""
 
     project: ProjectConfig
@@ -90,8 +121,8 @@ class TrainingJob(BaseModel):
     base: ModelConfig
     output: Optional[ModelConfig] = None
     trainer: TrainerExtras
-    sft: TrainingArguments
-    peft: Optional[LoraConfig] = None
+    sft: SFT
+    peft: Optional[PEFT] = None
     quantized: Optional[bool] = None
     tokenizer: Optional[TokenizerExtras] = None
     freeze: Optional[FreezeExtras] = None
@@ -117,13 +148,41 @@ class TrainingJob(BaseModel):
             raise SystemExit(1)
         except ValidationError as e:
             print(f"Validation error: {e}")
+            print(e.errors())
             raise SystemExit(1)
         except yaml.YAMLError as e:
             print(f"YAML parsing error: {e}")
             raise SystemExit(1)
 
 
-class BatchInferenceJob(BaseModel):
+class ServingService(BaseModel, use_enum_values=True):
+    """Configuration for batch inference, including task, dataset, and model details."""
+
+    project: ProjectConfig
+    task: Task
+    model: ModelConfig
+
+    @staticmethod
+    def load(file_path: str) -> "ServingService":
+        """Load and validate a configuration file."""
+        try:
+            with open(file_path, "r") as file:
+                data = yaml.safe_load(file)
+                config = ServingService(**data)
+                return config
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            raise SystemExit(1)
+        except ValidationError as e:
+            print(f"Validation error: {e}")
+            print(e.errors())
+            raise SystemExit(1)
+        except yaml.YAMLError as e:
+            print(f"YAML parsing error: {e}")
+            raise SystemExit(1)
+
+
+class BatchInferenceJob(BaseModel, use_enum_values=True):
     """Configuration for batch inference, including task, dataset, and model details."""
 
     project: ProjectConfig
@@ -146,6 +205,7 @@ class BatchInferenceJob(BaseModel):
             raise SystemExit(1)
         except ValidationError as e:
             print(f"Validation error: {e}")
+            print(e.errors())
             raise SystemExit(1)
         except yaml.YAMLError as e:
             print(f"YAML parsing error: {e}")
