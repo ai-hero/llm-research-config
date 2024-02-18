@@ -1,10 +1,11 @@
 """Schema for the configuration file, including project, dataset, model, and training settings."""
 import yaml
-from typing import Optional, List, Enum
+from typing import Optional, List
 from pydantic import BaseModel, validator
 from transformers import TrainingArguments
 from pydantic import ValidationError
 from peft import LoraConfig
+from enum import Enum
 
 
 class ProjectConfig(BaseModel):
@@ -61,7 +62,7 @@ class GeneratorExtras(BaseModel):
 class TokenizerExtras(BaseModel):
     """Optional configuration for tokenizers, including additional tokens."""
 
-    additional_tokens: Optional[List[str]] = None
+    additional_tokens: List[str]
 
 
 class FreezeExtras(BaseModel):
@@ -72,7 +73,10 @@ class FreezeExtras(BaseModel):
 
 
 class EvalExtras(BaseModel):
-    size: int = 100
+    """Extra configs and code for running tests and metrics."""
+
+    size: Optional[int] = None
+    randomize: Optional[bool] = None
     tests: Optional[str] = None
     metrics: Optional[str] = None
 
