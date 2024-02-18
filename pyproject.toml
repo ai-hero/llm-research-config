@@ -14,11 +14,26 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
 ]
-dynamic = ["dependencies"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+dependencies = [
+    "pydantic==2.6.1",
+    "transformers==4.36.1",
+    "peft==0.7.1",
+    "pyyaml==6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.5,>=8.0.0", # Consolidated pytest requirements
+    "black>=22.3",
+    "mypy>=0.910",
+    "ruff>=0.0.79",
+    "blacken-docs>=1.11.0",
+    "pyupgrade>=2.29.1",
+    "detect-secrets>=1.2.0",
+    "tomli>=1.2.3",
+    "pre-commit>=2.17.0",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
