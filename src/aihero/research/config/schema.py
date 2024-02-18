@@ -109,7 +109,6 @@ class PEFT(BaseModel):
     bias: str
     task_type: str
     target_modules: List[str]
-    quantized: Optional[bool] = None
 
 
 class TrainingJob(BaseModel, use_enum_values=True):
@@ -189,6 +188,7 @@ class BatchInferenceJob(BaseModel, use_enum_values=True):
     task: Task
     dataset: DatasetConfig
     model: ModelConfig
+    quantized: Optional[bool] = None
     generator: GeneratorExtras
     eval: Optional[EvalExtras] = None
 
