@@ -34,6 +34,7 @@ class DatasetConfig(BaseModel, use_enum_values=True):
     name: str
     type: Type
     task: Task
+    path: Optional[str] = None  # For local.
 
 
 class ModelConfig(BaseModel, use_enum_values=True):
