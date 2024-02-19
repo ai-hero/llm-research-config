@@ -96,9 +96,9 @@ class SFT(BaseModel):
     logging_steps: int
     evaluation_strategy: str
     eval_steps: int
-    bf16: Optional[bool] = None
-    optim: Optional[str] = None
-    max_grad_norm: Optional[float] = None
+    optim: str
+    bf16: bool
+    max_grad_norm: float
 
 
 class PEFT(BaseModel):
