@@ -94,11 +94,11 @@ class SFT(BaseModel):
     gradient_checkpointing_kwargs: Optional[dict[str, Any]] = None
     logging_strategy: str
     logging_steps: int
-    evaluation_strategy: str
-    eval_steps: int
-    bf16: Optional[bool] = None
-    optim: Optional[str] = None
-    max_grad_norm: Optional[float] = None
+    evaluation_strategy: Optional[str] = None
+    eval_steps: Optional[int] = None
+    optim: str
+    bf16: bool
+    max_grad_norm: float
 
 
 class PEFT(BaseModel):
